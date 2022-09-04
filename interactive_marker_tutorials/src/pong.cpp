@@ -33,10 +33,12 @@
 #include <ros/ros.h>
 #include <math.h>
 #include <boost/thread/mutex.hpp>
+#include "interactive_marker_tutorials/pongControl.h"
 
 #include <tf/tf.h>
 
 using namespace visualization_msgs;
+using namespace std;
 
 static const float FIELD_WIDTH = 12.0;
 static const float FIELD_HEIGHT = 8.0;
@@ -67,6 +69,8 @@ public:
 
     ros::NodeHandle nh;
     game_loop_timer_ =  nh.createTimer(ros::Duration(UPDATE_RATE), boost::bind( &PongGame::spinOnce, this ) );
+
+    external_control_sub_ = nh.subscribe<interactive_marker_tutorials::pongControl>("external_control", 1000, &PongGame::externalControlCb, this);
   }
 
 private:
@@ -157,6 +161,10 @@ private:
       last_ball_pos_x_ = ball_pos_x_;
       last_ball_pos_y_ = ball_pos_y_;
 
+      // update controlled paddle
+      int p = player_contexts_[1].active ? 1 : 0;
+      setPaddlePos( p, player_contexts_[p].pos);
+
       // control computer player
       if ( !player_contexts_[0].active || !player_contexts_[1].active )
       {
@@ -176,6 +184,7 @@ private:
 
   void setPaddlePos( unsigned player, float pos )
   {
+    std::cout << player << " " << pos << std::endl;
     if ( player > 1 )
     {
       return;
@@ -202,6 +211,16 @@ private:
     server_.setPose( marker_name+"_display", pose );
   }
 
+  void externalControlCb(const interactive_marker_tutorials::pongControl::ConstPtr& msg){
+    // std::cout << msg->active.c_str() << std::endl;
+    // ROS_INFO("Active: [%i]", msg->active);
+    player_contexts_[0].active = msg->player1_active;
+    player_contexts_[1].active = msg->player2_active;
+    player_contexts_[0].pos = msg->player1_pos;
+    player_contexts_[1].pos = msg->player2_pos;
+  }
+
+
   void processPaddleFeedback( unsigned player, const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
   {
     if ( player > 1 )
@@ -212,11 +231,12 @@ private:
     std::string control_marker_name = feedback->marker_name;
     geometry_msgs::Pose pose = feedback->pose;
 
-    setPaddlePos( player, pose.position.y );
+    // setPaddlePos( player, pose.position.y );
 
     if ( feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::MOUSE_DOWN )
     {
       player_contexts_[player].active = true;
+      player_contexts_[player].pos = pose.position.y;
     }
     if ( feedback->event_type == visualization_msgs::InteractiveMarkerFeedback::MOUSE_UP )
     {
@@ -467,7 +487,11 @@ private:
 
   interactive_markers::InteractiveMarkerServer server_;
 
+  interactive_marker_tutorials::pongControl external_control_msg_;
+
   ros::Timer game_loop_timer_;
+
+  ros::Subscriber external_control_sub_;
 
   InteractiveMarker field_marker_;
 

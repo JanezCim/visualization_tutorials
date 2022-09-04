@@ -1,0 +1,4 @@
+int8 player1_active
+float32 player1_pos
+int8 player2_active
+float32 player2_pos

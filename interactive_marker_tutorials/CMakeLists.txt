@@ -1,7 +1,18 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(interactive_marker_tutorials)
 
-find_package(catkin REQUIRED COMPONENTS interactive_markers roscpp visualization_msgs tf)
+find_package(catkin REQUIRED COMPONENTS interactive_markers roscpp visualization_msgs tf message_generation)
+
+
+add_message_files(
+  FILES
+  pongControl.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
