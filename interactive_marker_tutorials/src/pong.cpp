@@ -184,7 +184,6 @@ private:
 
   void setPaddlePos( unsigned player, float pos )
   {
-    std::cout << player << " " << pos << std::endl;
     if ( player > 1 )
     {
       return;
@@ -439,7 +438,7 @@ private:
     int_marker.controls.push_back( control );
     server_.insert( int_marker );
 
-    // Display for player 2
+    // Display for player 2 
     int_marker.name = "paddle1_display";
     int_marker.pose.position.x = PLAYER_X;
 
