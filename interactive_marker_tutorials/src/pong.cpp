@@ -70,7 +70,7 @@ public:
     ros::NodeHandle nh;
     game_loop_timer_ =  nh.createTimer(ros::Duration(UPDATE_RATE), boost::bind( &PongGame::spinOnce, this ) );
 
-    external_control_sub_ = nh.subscribe<interactive_marker_tutorials::pongControl>("external_control", 1000, &PongGame::externalControlCb, this);
+    external_control_sub_ = nh.subscribe<interactive_marker_tutorials::pongControl>("pong_control", 1000, &PongGame::externalControlCb, this);
   }
 
 private:
@@ -161,9 +161,17 @@ private:
       last_ball_pos_x_ = ball_pos_x_;
       last_ball_pos_y_ = ball_pos_y_;
 
-      // update controlled paddle
-      int p = player_contexts_[1].active ? 1 : 0;
-      setPaddlePos( p, player_contexts_[p].pos);
+      // if both paddles are active, controll both
+      if ( player_contexts_[0].active && player_contexts_[1].active )
+      {
+        setPaddlePos( 0, player_contexts_[0].pos );
+        setPaddlePos( 1, player_contexts_[1].pos );
+      }
+      else{
+        // update controlled paddle if only one paddle is active
+        int p = player_contexts_[1].active ? 1 : 0;
+        setPaddlePos( p, player_contexts_[p].pos);
+      }
 
       // control computer player
       if ( !player_contexts_[0].active || !player_contexts_[1].active )
@@ -214,9 +222,16 @@ private:
     // std::cout << msg->active.c_str() << std::endl;
     // ROS_INFO("Active: [%i]", msg->active);
     player_contexts_[0].active = msg->player1_active;
+
+    // only update each player pos if external active is true
+    if(msg->player1_active){
+      player_contexts_[0].pos = msg->player1_pos;
+    }
+    
     player_contexts_[1].active = msg->player2_active;
-    player_contexts_[0].pos = msg->player1_pos;
-    player_contexts_[1].pos = msg->player2_pos;
+    if(msg->player2_active){
+      player_contexts_[1].pos = msg->player2_pos;
+    }
   }
 
 
@@ -294,7 +309,7 @@ private:
   void updateScore()
   {
     InteractiveMarker int_marker;
-    int_marker.header.frame_id = "base_link";
+    int_marker.header.frame_id = frame;
     int_marker.name = "score";
 
     InteractiveMarkerControl control;
@@ -331,7 +346,7 @@ private:
   void makeFieldMarker()
   {
     InteractiveMarker int_marker;
-    int_marker.header.frame_id = "base_link";
+    int_marker.header.frame_id = frame;
     int_marker.name = "field";
 
     InteractiveMarkerControl control;
@@ -376,7 +391,7 @@ private:
   void makePaddleMarkers()
   {
     InteractiveMarker int_marker;
-    int_marker.header.frame_id = "base_link";
+    int_marker.header.frame_id = frame;
 
     // Add a control for moving the paddle
     InteractiveMarkerControl control;
@@ -455,7 +470,7 @@ private:
   void makeBallMarker()
   {
     InteractiveMarker int_marker;
-    int_marker.header.frame_id = "base_link";
+    int_marker.header.frame_id = frame;
 
     InteractiveMarkerControl control;
     control.always_visible = true;
@@ -493,6 +508,8 @@ private:
   ros::Subscriber external_control_sub_;
 
   InteractiveMarker field_marker_;
+
+  std::string frame = "laser";
 
   struct PlayerContext
   {
