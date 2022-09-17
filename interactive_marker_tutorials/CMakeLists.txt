@@ -23,7 +23,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS interactive_markers roscpp visualization_msgs tf
+  CATKIN_DEPENDS interactive_markers roscpp visualization_msgs tf message_runtime
 )
 
 ###########
